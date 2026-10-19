@@ -23,3 +23,11 @@ Não suporta operações reais de compra, venda, saque, trocas, guarda de skins 
 ## Publicação
 
 Em um serviço de hospedagem Node que disponibilize HTTPS, configure Start Command `npm start` e as quatro variáveis PORT (normalmente fornecida pela plataforma), BASE_URL, SESSION_SECRET e STEAM_API_KEY. A URL em BASE_URL precisa ser o endereço exato utilizado no navegador (incluindo https). **Não publique** o conteúdo de `.env`.
+
+## Atualização v5 — Caixas em tela cheia
+
+- O modal de caixas usa a tela inteira em computadores e celulares.
+- Exibe itens agrupados pela raridade do catálogo (cada item único aparece uma única vez).
+- O sorteio gratuito usa pesos **hipotéticos**, não oficiais: azul 79,92%, roxo 15,98%, rosa 3,20%, vermelho 0,64% e especial 0,26%, renormalizados quando alguma categoria não existe na caixa. Nenhuma skin real, dinheiro ou prêmio é transferido.
+- A maioria dos modelos especiais em caixas reais aparece como possíveis acabamentos de faca; mostrar muitas facas no catálogo não significa alta chance na simulação.
+- Para atualizar o Render, substitua `index.html` na raiz do repositório GitHub e confirme um novo commit. O `server.js`, `package.json` e configurações existentes podem permanecer intactos.

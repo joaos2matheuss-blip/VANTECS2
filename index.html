@@ -35,6 +35,33 @@
 @media(max-width:380px){.case-grid{grid-template-columns:1fr 1fr;gap:9px}.case-meta{padding:9px}.case-meta h3{font-size:12px}}
 
 .steam-profile{display:flex;gap:13px;align-items:center;flex-wrap:wrap;padding:18px;border:1px solid #344659;background:#182432;border-radius:14px;margin:14px 0}.steam-profile img{width:60px;height:60px;border-radius:12px}.steam-status{font-size:12px;color:#9badbe}.steam-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px}.steam-item{border:1px solid #324157;border-radius:11px;background:#192535;padding:12px;min-height:165px;text-align:center}.steam-item img{width:100%;height:93px;object-fit:contain}.steam-item strong{display:block;font-size:11px;margin-top:5px;overflow-wrap:anywhere}.steam-item small{color:#92a3b8}
+
+/* VANTA v5: case experience occupies the entire viewport */
+.modal-mask.case-fullscreen{padding:0;display:block;z-index:40;background:#080e17}
+.case-fullscreen .modal{width:100%;height:100dvh;max-height:100dvh;border:0;border-radius:0;overflow-y:auto;padding:clamp(16px,3vw,42px);background:radial-gradient(ellipse at 50% 0%,#203628,#101824 45%,#0c131e 100%)}
+.case-fullscreen .case-workspace{max-width:1380px;margin:0 auto}
+.case-fullscreen .close{position:sticky;top:0;float:right;z-index:10;font-size:20px;padding:8px 14px}
+.case-heading{display:flex;align-items:center;gap:26px;justify-content:center;flex-wrap:wrap;min-height:165px;text-align:left}
+.case-heading .case-detail-art{margin:0;width:190px;height:150px}
+.case-heading h2{font-size:clamp(26px,3vw,43px)}
+.case-fullscreen .spinner{height:186px;max-width:1100px;margin:20px auto}
+.case-fullscreen .spin-card{height:155px;width:150px}
+.case-fullscreen .spin-card img{width:138px;height:112px}
+.case-prize-groups{max-width:1380px;margin:24px auto}
+.rarity-group{margin:15px 0;border:1px solid #304055;border-radius:14px;overflow:hidden;background:#111c29}
+.rarity-group summary{display:flex;gap:12px;align-items:center;cursor:pointer;padding:15px 18px;font-weight:800;list-style:none}
+.rarity-group summary::-webkit-details-marker{display:none}
+.rarity-dot{height:11px;width:11px;border-radius:50%;background:var(--rarity-color);box-shadow:0 0 12px var(--rarity-color)}
+.rarity-group summary small{font-size:11px;color:#a9b7c7;font-weight:400;margin-left:auto}
+.rarity-group .case-prizes{padding:0 15px 15px;display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px}
+.rarity-group .case-prize{min-height:142px;padding:14px}
+.rarity-group .case-prize img{height:94px}
+.case-hint{font-size:12px;color:#9cadba;text-align:center;margin:16px auto;max-width:1000px}
+.case-odds{padding:14px;border:1px solid #425946;border-radius:13px;background:#172a22;max-width:1100px;margin:15px auto}
+.case-odds strong{color:#c5fa9a}
+.case-odds-list{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
+.case-odds-list span{padding:5px 9px;border-radius:7px;border:1px solid var(--rarity-color);color:var(--rarity-color);font-size:11px;font-weight:700}
+@media(max-width:650px){.case-heading{text-align:center}.case-heading .case-detail-art{width:140px;height:116px}.rarity-group .case-prizes{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
 <body>
@@ -133,30 +160,51 @@ function renderCases(){let node=document.getElementById('case-grid');if(!node)re
 }
 function retryCatalog(){caseLoadState='loading';renderCases();loadCatalog()}
 function showRandomCase(){if(caseLoadState!=='ok'||!catalogCases.length){toast('Aguarde o carregamento do catálogo.');return}openCase(catalogCases[0].id)}
-function caseContents(c){
- // ByMykel provides the actual item list and official rarity color for every crate.
- // Do not infer rarity from position, name, price, or random animation states.
- return [...(c.contains||[]),...(c.contains_rare||[])].filter(x=>x.image);
-}
-function rarityColor(item){
- const color=item?.rarity?.color;
- return typeof color==='string' && /^#[0-9a-fA-F]{6}$/.test(color)?color:'#8091a7';
-}
+function caseContents(c){return [...(c.contains||[]),...(c.contains_rare||[])].filter(x=>x.image)}
+function rarityColor(item){const color=item?.rarity?.color;return typeof color==='string'&&/^#[0-9a-fA-F]{6}$/.test(color)?color:'#8091a7'}
 function rarityLabel(item){return textSafe(item?.rarity?.name||'Raridade não informada')}
-function openCase(id){const c=catalogCases.find(x=>x.id===id);if(!c)return;const pool=caseContents(c);
- modal(`<span class="eyebrow">CAIXA OFICIAL / EXPLORAÇÃO DEMONSTRATIVA</span><h2>${textSafe(c.name)}</h2><p>Veja os itens associados a esta caixa. Os resultados da roleta não são prêmios reais.</p><img class="case-detail-art" src="${textSafe(c.image)}" alt="${textSafe(c.name)}"><div id="spin-zone"><div class="market-banner">Prévia gratuita: resultado puramente visual, sem depósitos, apostas, créditos ou skins transferíveis.</div><button class="btn primary" style="width:100%" onclick="simulateCase('${textSafe(c.id)}')">▶ Simular abertura gratuita</button></div><h3>Conteúdo da caixa (${pool.length})</h3><div class="case-prizes">${pool.map(x=>`<div class="case-prize" style="--rarity-color:${rarityColor(x)}"><img src="${textSafe(x.image)}" loading="lazy" alt="${textSafe(x.name)}"><span title="${textSafe(x.name)}">${textSafe(x.name)}</span><div class="rarity-name">${rarityLabel(x)}</div></div>`).join('')}</div><p style="font-size:11px">As imagens refletem os itens do catálogo, não inventários disponíveis para entrega. A simulação seleciona itens com chances iguais apenas para demonstração; não representa as probabilidades reais do CS2. Não há sorteio comercial.</p>`)
+// Odds are illustrative for a FREE, NON-COMMERCIAL demo. NOT Valve's official rates.
+const DEMO_TIERS=[
+ {id:'blue',name:'Mil-Spec / Azul',weight:79.92,color:'#4b85ff'},
+ {id:'purple',name:'Restricted / Roxo',weight:15.98,color:'#a064fc'},
+ {id:'pink',name:'Classified / Rosa',weight:3.20,color:'#dd42d7'},
+ {id:'red',name:'Covert / Vermelho',weight:0.64,color:'#ef4444'},
+ {id:'rare',name:'★ Especial / Raro',weight:0.26,color:'#e4bd59'}
+];
+function caseTier(item,c){
+ if((c?.contains_rare||[]).some(x=>x.id===item.id))return 'rare';
+ const name=(item?.rarity?.name||'').toLowerCase();
+ if(name.includes('mil-spec'))return 'blue';
+ if(name.includes('restricted'))return 'purple';
+ if(name.includes('classified'))return 'pink';
+ if(name.includes('covert'))return 'red';
+ if(name.includes('rare')||name.includes('contraband'))return 'rare';
+ return 'other';
 }
-function simulateCase(id){if(spinBusy)return;const c=catalogCases.find(x=>x.id===id),pool=caseContents(c),zone=document.getElementById('spin-zone');if(!c||!pool.length||!zone)return;
- spinBusy=true;
- // Index final predefinido em uma animação visual sem valor monetário.
- const target=24;const selections=Array.from({length:32},(_,i)=>pool[Math.floor(Math.random()*pool.length)]);
- const rowWidth=140, winIndex=target;
- zone.innerHTML=`<div class="spinner" id="spinner"><div class="spin-track" id="spin-track">${selections.map((x,i)=>`<div class="spin-card" style="--rarity-color:${rarityColor(x)}"><img src="${textSafe(x.image)}" alt=""><small>${textSafe(x.name)}</small></div>`).join('')}</div></div><div class="muted" style="text-align:center">Simulação visual em andamento...</div>`;
- let track=document.getElementById('spin-track');
- // Centraliza o item selecionado em relação à largura real da janela.
- const spinner=document.getElementById('spinner'),goal=target*rowWidth-(spinner.clientWidth/2-66);
- requestAnimationFrame(()=>{track.style.transition='transform 4s cubic-bezier(.14,.75,.15,1)';track.style.transform=`translateX(-${Math.max(0,goal)}px)`});
- setTimeout(()=>{spinBusy=false;const current=document.getElementById('spin-zone');if(!current)return;const x=selections[target];current.innerHTML=`<div class="calc-result"><strong>Resultado da simulação</strong><div class="row"><img src="${textSafe(x.image)}" alt="${textSafe(x.name)}" style="height:105px;max-width:65%;object-fit:contain"><div style="text-align:right"><strong>${textSafe(x.name)}</strong><div class="sub" style="color:${rarityColor(x)}">${rarityLabel(x)}</div><div class="sub">Apenas visual — não adquirido</div></div></div></div><button class="btn primary" style="width:100%;margin-top:12px" onclick="simulateCase('${textSafe(c.id)}')">Simular novamente</button><p class="muted" style="font-size:11px">Este resultado não é salvo no inventário e não possui valor financeiro.</p>`},4200)
+function groupedCaseContents(c){const pool=caseContents(c);return [...DEMO_TIERS.map(t=>({...t,items:pool.filter(x=>caseTier(x,c)===t.id)})),{id:'other',name:'Outros itens',weight:0,color:'#8ba2b5',items:pool.filter(x=>caseTier(x,c)==='other')}].filter(t=>t.items.length)}
+function sampleDemoItem(c){
+ const groups=groupedCaseContents(c).filter(t=>t.weight>0);
+ // Renormalizes tier weights for special crate types with absent rarity classes.
+ const sum=groups.reduce((n,t)=>n+t.weight,0);if(!sum)return null;
+ let choice=Math.random()*sum;
+ for(const t of groups){choice-=t.weight;if(choice<0)return t.items[Math.floor(Math.random()*t.items.length)]}
+ return groups[groups.length-1].items[0];
+}
+function prizeMarkup(x){return `<div class="case-prize" style="--rarity-color:${rarityColor(x)}"><img src="${textSafe(x.image)}" loading="lazy" alt="${textSafe(x.name)}"><span title="${textSafe(x.name)}">${textSafe(x.name)}</span><div class="rarity-name">${rarityLabel(x)}</div></div>`}
+function openCase(id){const c=catalogCases.find(x=>x.id===id);if(!c)return;const groups=groupedCaseContents(c),pool=caseContents(c);
+ const groupHTML=groups.map((g,i)=>`<details class="rarity-group" style="--rarity-color:${g.color}" ${i<2?'open':''}><summary><span class="rarity-dot"></span>${g.name}<small>${g.items.length} ${g.items.length===1?'item':'itens'} · ${i<2?'recolher':'expandir'}</small></summary><div class="case-prizes">${g.items.map(prizeMarkup).join('')}</div></details>`).join('');
+ modal(`<div class="case-workspace"><div class="case-heading"><img class="case-detail-art" src="${textSafe(c.image)}" alt="${textSafe(c.name)}"><div><span class="eyebrow">CAIXA OFICIAL · SIMULAÇÃO GRATUITA</span><h2>${textSafe(c.name)}</h2><p>Explore os itens da caixa e teste uma abertura visual, sem prêmios reais.</p></div></div><div class="case-odds"><strong>Distribuição ILUSTRATIVA da simulação</strong><div class="case-odds-list">${DEMO_TIERS.filter(t=>groups.some(g=>g.id===t.id)).map(t=>`<span style="--rarity-color:${t.color}">${t.name}: ${String(t.weight).replace('.',',')}%</span>`).join('')}</div><small>Pesos de demonstração, não são probabilidades oficiais nem anúncio de chances de uma abertura paga. Categorias inexistentes na caixa são excluídas e os pesos restantes são ajustados.</small></div><div id="spin-zone"><div style="text-align:center"><button class="btn primary" onclick="simulateCase('${textSafe(c.id)}')">▶ Simular abertura gratuita</button></div></div><div class="case-prize-groups"><h3>Conteúdo da caixa (${pool.length} itens diferentes)</h3><p class="case-hint">Os itens abaixo aparecem UMA vez cada; a quantidade de skins azuis na lista não representa a chance de obtê-las. Expanda as categorias para explorar.</p>${groupHTML}</div><p class="case-hint">Esta simulação é gratuita e não adiciona itens à Steam, ao inventário ou a qualquer saldo financeiro.</p></div>`,true);
+}
+function simulateCase(id){if(spinBusy)return;const c=catalogCases.find(x=>x.id===id),zone=document.getElementById('spin-zone');if(!c||!zone)return;
+ const result=sampleDemoItem(c);if(!result){toast('Sem itens disponíveis para simular.');return}
+ spinBusy=true;const target=32,selections=Array.from({length:41},()=>sampleDemoItem(c));selections[target]=result;
+ zone.innerHTML=`<div class="spinner" id="spinner"><div class="spin-track" id="spin-track">${selections.map(x=>`<div class="spin-card" style="--rarity-color:${rarityColor(x)}"><img src="${textSafe(x.image)}" alt=""><small>${textSafe(x.name)}</small></div>`).join('')}</div></div><div class="muted" style="text-align:center">Simulação visual em andamento...</div>`;
+ const track=document.getElementById('spin-track'),spinner=document.getElementById('spinner');
+ const card=track.children[target];const goal=card.offsetLeft+card.offsetWidth/2-spinner.clientWidth/2;
+ requestAnimationFrame(()=>{track.style.transition='transform 4s cubic-bezier(.12,.75,.16,1)';track.style.transform=`translateX(-${Math.max(0,goal)}px)`});
+ setTimeout(()=>{spinBusy=false;const current=document.getElementById('spin-zone');if(!current)return;
+ current.innerHTML=`<div class="calc-result" style="max-width:720px;margin:22px auto;border-color:${rarityColor(result)}"><strong>Resultado da simulação</strong><div class="row"><img src="${textSafe(result.image)}" alt="${textSafe(result.name)}" style="height:145px;max-width:52%;object-fit:contain"><div style="text-align:right"><strong>${textSafe(result.name)}</strong><div class="sub" style="color:${rarityColor(result)}">${rarityLabel(result)}</div><div class="sub">Apenas visual — não adquirido</div></div></div></div><div style="text-align:center"><button class="btn primary" onclick="simulateCase('${textSafe(c.id)}')">Simular novamente</button></div><p class="case-hint">Resultado demonstrativo, não salvo no inventário e sem valor financeiro.</p>`;
+ },4200)
 }
 document.addEventListener('DOMContentLoaded',()=>{document.getElementById('case-search')?.addEventListener('input',renderCases);document.getElementById('case-filter')?.addEventListener('change',renderCases);loadCatalog()});
 
@@ -165,7 +213,7 @@ function toggleFavorite(id){favorites.has(id)?favorites.delete(id):favorites.add
 function resetFilters(){filter='Todas';search='';sort='popular';document.getElementById('search').value='';document.getElementById('sort').value='popular';document.querySelectorAll('.filter').forEach(b=>b.classList.toggle('active',b.dataset.filter==='Todas'));renderProducts()}
 document.querySelectorAll('.filter').forEach(b=>b.addEventListener('click',()=>{filter=b.dataset.filter;document.querySelectorAll('.filter').forEach(x=>x.classList.toggle('active',x===b));renderProducts()}));document.getElementById('search').addEventListener('input',e=>{search=e.target.value.trim().toLowerCase();go('market');renderProducts()});document.getElementById('sort').addEventListener('change',e=>{sort=e.target.value;renderProducts()});document.querySelectorAll('#nav button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.page)));
 function go(page){document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id==='page-'+page));document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===page));if(page==='offers')renderOffers();if(page==='inventory')renderInventory();if(page==='cases')renderCases();if(page==='steam'&&steamUser)loadSteamInventory();window.scrollTo({top:0,behavior:'smooth'});const overlay=document.getElementById('modal-root');if(overlay.dataset.mobile==='1'){overlay.innerHTML='';overlay.dataset.mobile='0'}}
-function modal(html){document.getElementById('modal-root').innerHTML=`<div class="modal-mask" onclick="if(event.target===this)closeModal()"><div class="modal"><button class="close" onclick="closeModal()">✕</button>${html}</div></div>`}function closeModal(){document.getElementById('modal-root').innerHTML=''}function toast(t){const el=document.getElementById('toast');el.textContent=t;el.classList.remove('hidden');clearTimeout(window._toast);window._toast=setTimeout(()=>el.classList.add('hidden'),3300)}
+function modal(html,fullscreen=false){document.getElementById('modal-root').innerHTML=`<div class="modal-mask ${fullscreen?'case-fullscreen':''}" onclick="if(event.target===this)closeModal()"><div class="modal"><button class="close" onclick="closeModal()">✕</button>${html}</div></div>`}function closeModal(){document.getElementById('modal-root').innerHTML=''}function toast(t){const el=document.getElementById('toast');el.textContent=t;el.classList.remove('hidden');clearTimeout(window._toast);window._toast=setTimeout(()=>el.classList.add('hidden'),3300)}
 function openProduct(id){let p=items.find(i=>i.id===id);modal(`<span class="eyebrow">ITEM DE DEMONSTRAÇÃO</span><h2>${p.name}</h2><p style="margin-top:0">${p.wear} · Float ${p.float} · ${p.rarity}</p><div class="product-art" style="--glow:${p.glow};height:170px;border:1px solid #35465a;border-radius:12px;background:#202b39">${imageMarkup(p)}</div><div class="row" style="margin:15px 0"><span class="muted">Preço anunciado</span><strong style="font-size:23px">${money(p.price)}</strong></div><div class="row"><span class="muted">Comissão ilustrativa da plataforma</span><strong>3%</strong></div><div class="row" style="margin:7px 0 20px"><span class="muted">Líquido do vendedor se vender no preço anunciado</span><strong>${money(p.price*.97)}</strong></div><label class="label">Sua proposta (R$)</label><input class="field" id="offer-price" type="number" value="${(p.price*.92).toFixed(2)}" min="1" step="0.01"><button class="btn primary" style="width:100%;margin-top:15px" onclick="makeOffer(${id})">Registrar proposta de demonstração</button><p style="font-size:11px">Não há vendedor real nem compra ativa. A proposta ficará salva neste navegador.</p>`)}
 function makeOffer(id){const el=document.getElementById('offer-price');let val=Number(el.value);if(!Number.isFinite(val)||val<=0){toast('Informe um valor válido.');return}offers.unshift({id,amount:val,at:new Date().toLocaleString('pt-BR'),status:'Simulada'});localStorage.setItem('vanta-offers',JSON.stringify(offers));closeModal();renderProducts();toast('Proposta salva localmente. Nenhum vendedor foi contatado.');go('offers')}
 function renderOffers(){document.getElementById('offer-list').innerHTML=offers.length?offers.map((o,i)=>{let p=items.find(x=>x.id===o.id);return p?`<div class="inventory-item"><div class="inventory-thumb">${imageMarkup(p)}</div><div class="grow"><strong>${p.name}</strong><small>Oferta ${money(o.amount)} · ${o.at}</small></div><span class="badge">SIMULADA</span><button class="btn small" onclick="removeOffer(${i})">Excluir</button></div>`:''}).join(''):'<div class="empty">✉<strong>Nenhuma proposta ainda</strong>Explore o marketplace e faça uma oferta em uma skin para testar a experiência.<div style="margin-top:16px"><button class="btn primary" onclick="go(\'market\')">Explorar skins →</button></div></div>'}
