@@ -1,0 +1,7 @@
+{
+  "name": "vanta-cs2",
+  "version": "3.0.0",
+  "private": true,
+  "scripts": {"start": "node server.js", "check": "node --check server.js"},
+  "engines": {"node": ">=20"}
+}
