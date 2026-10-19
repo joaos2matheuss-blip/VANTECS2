@@ -21,13 +21,13 @@
 .case-feature{margin:20px 0 25px;background:linear-gradient(110deg,#243b2c,#142031);border:1px solid #466b48;border-radius:18px;padding:25px;display:flex;align-items:center;justify-content:space-between;gap:16px}
 .case-feature h2{margin:5px 0;font-size:27px}.case-feature p{max-width:580px;margin:0;color:#a7bdb1}
 .case-prizes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:15px}
-.case-prize{border:1px solid #344257;border-radius:10px;padding:9px;text-align:center;background:#182434;min-width:0}
-.case-prize img{width:100%;height:75px;object-fit:contain}.case-prize span{display:block;color:#a9bad0;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.case-prize{border:1px solid var(--rarity-color,#344257);border-bottom:3px solid var(--rarity-color,#344257);border-radius:10px;padding:9px;text-align:center;background:radial-gradient(ellipse at 50% 95%,color-mix(in srgb,var(--rarity-color,#344257) 18%,transparent),#182434 72%);min-width:0}
+.case-prize img{width:100%;height:75px;object-fit:contain}.case-prize .rarity-name{font-size:10px;color:var(--rarity-color,#a9bad0);margin-top:4px;font-weight:600}.case-prize span{display:block;color:#a9bad0;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .case-detail-art{display:block;width:210px;height:170px;object-fit:contain;margin:0 auto}
 .spinner{height:147px;overflow:hidden;position:relative;border:1px solid #536144;border-radius:13px;background:#0c141f;margin:19px 0}
 .spinner:before{content:'';position:absolute;z-index:4;left:50%;top:0;bottom:0;width:3px;background:var(--lime);box-shadow:0 0 15px var(--lime)}
 .spin-track{display:flex;gap:8px;align-items:center;height:100%;width:max-content;padding:8px;transform:translateX(0);will-change:transform}
-.spin-card{width:132px;height:120px;flex:none;border:1px solid #34465b;border-bottom:3px solid #77a9d2;border-radius:10px;background:radial-gradient(circle at 50% 100%,#253649,#111927);text-align:center;display:flex;flex-direction:column;justify-content:center;padding:8px}
+.spin-card{width:132px;height:120px;flex:none;border:1px solid var(--rarity-color,#34465b);border-bottom:3px solid var(--rarity-color,#77a9d2);border-radius:10px;background:radial-gradient(circle at 50% 100%,#253649,#111927);text-align:center;display:flex;flex-direction:column;justify-content:center;padding:8px}
 .spin-card img{width:115px;height:82px;object-fit:contain}.spin-card small{font-size:10px;color:#c1ceda;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .spin-card.tier-high{border-bottom-color:#d57aeb}.spin-card.tier-rare{border-bottom-color:#f0ca72}
 @media(max-width:1100px){.case-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
@@ -133,21 +133,30 @@ function renderCases(){let node=document.getElementById('case-grid');if(!node)re
 }
 function retryCatalog(){caseLoadState='loading';renderCases();loadCatalog()}
 function showRandomCase(){if(caseLoadState!=='ok'||!catalogCases.length){toast('Aguarde o carregamento do catálogo.');return}openCase(catalogCases[0].id)}
-function caseContents(c){return (c.contains||[]).filter(x=>x.image).slice(0,80)}
+function caseContents(c){
+ // ByMykel provides the actual item list and official rarity color for every crate.
+ // Do not infer rarity from position, name, price, or random animation states.
+ return [...(c.contains||[]),...(c.contains_rare||[])].filter(x=>x.image);
+}
+function rarityColor(item){
+ const color=item?.rarity?.color;
+ return typeof color==='string' && /^#[0-9a-fA-F]{6}$/.test(color)?color:'#8091a7';
+}
+function rarityLabel(item){return textSafe(item?.rarity?.name||'Raridade não informada')}
 function openCase(id){const c=catalogCases.find(x=>x.id===id);if(!c)return;const pool=caseContents(c);
- modal(`<span class="eyebrow">CAIXA OFICIAL / EXPLORAÇÃO DEMONSTRATIVA</span><h2>${textSafe(c.name)}</h2><p>Veja os itens associados a esta caixa. Os resultados da roleta não são prêmios reais.</p><img class="case-detail-art" src="${textSafe(c.image)}" alt="${textSafe(c.name)}"><div id="spin-zone"><div class="market-banner">Prévia gratuita: resultado puramente visual, sem depósitos, apostas, créditos ou skins transferíveis.</div><button class="btn primary" style="width:100%" onclick="simulateCase('${textSafe(c.id)}')">▶ Simular abertura gratuita</button></div><h3>Conteúdo da caixa (${c.contains.length})</h3><div class="case-prizes">${pool.map(x=>`<div class="case-prize"><img src="${textSafe(x.image)}" loading="lazy" alt="${textSafe(x.name)}"><span title="${textSafe(x.name)}">${textSafe(x.name)}</span></div>`).join('')}</div><p style="font-size:11px">As imagens refletem os itens do catálogo, não inventários disponíveis para entrega. Não são exibidas probabilidades de drop porque não existe sorteio comercial nesta versão.</p>`)
+ modal(`<span class="eyebrow">CAIXA OFICIAL / EXPLORAÇÃO DEMONSTRATIVA</span><h2>${textSafe(c.name)}</h2><p>Veja os itens associados a esta caixa. Os resultados da roleta não são prêmios reais.</p><img class="case-detail-art" src="${textSafe(c.image)}" alt="${textSafe(c.name)}"><div id="spin-zone"><div class="market-banner">Prévia gratuita: resultado puramente visual, sem depósitos, apostas, créditos ou skins transferíveis.</div><button class="btn primary" style="width:100%" onclick="simulateCase('${textSafe(c.id)}')">▶ Simular abertura gratuita</button></div><h3>Conteúdo da caixa (${pool.length})</h3><div class="case-prizes">${pool.map(x=>`<div class="case-prize" style="--rarity-color:${rarityColor(x)}"><img src="${textSafe(x.image)}" loading="lazy" alt="${textSafe(x.name)}"><span title="${textSafe(x.name)}">${textSafe(x.name)}</span><div class="rarity-name">${rarityLabel(x)}</div></div>`).join('')}</div><p style="font-size:11px">As imagens refletem os itens do catálogo, não inventários disponíveis para entrega. A simulação seleciona itens com chances iguais apenas para demonstração; não representa as probabilidades reais do CS2. Não há sorteio comercial.</p>`)
 }
 function simulateCase(id){if(spinBusy)return;const c=catalogCases.find(x=>x.id===id),pool=caseContents(c),zone=document.getElementById('spin-zone');if(!c||!pool.length||!zone)return;
  spinBusy=true;
  // Index final predefinido em uma animação visual sem valor monetário.
  const target=24;const selections=Array.from({length:32},(_,i)=>pool[Math.floor(Math.random()*pool.length)]);
  const rowWidth=140, winIndex=target;
- zone.innerHTML=`<div class="spinner" id="spinner"><div class="spin-track" id="spin-track">${selections.map((x,i)=>`<div class="spin-card ${i===target?'tier-high':''}"><img src="${textSafe(x.image)}" alt=""><small>${textSafe(x.name)}</small></div>`).join('')}</div></div><div class="muted" style="text-align:center">Simulação visual em andamento...</div>`;
+ zone.innerHTML=`<div class="spinner" id="spinner"><div class="spin-track" id="spin-track">${selections.map((x,i)=>`<div class="spin-card" style="--rarity-color:${rarityColor(x)}"><img src="${textSafe(x.image)}" alt=""><small>${textSafe(x.name)}</small></div>`).join('')}</div></div><div class="muted" style="text-align:center">Simulação visual em andamento...</div>`;
  let track=document.getElementById('spin-track');
  // Centraliza o item selecionado em relação à largura real da janela.
  const spinner=document.getElementById('spinner'),goal=target*rowWidth-(spinner.clientWidth/2-66);
  requestAnimationFrame(()=>{track.style.transition='transform 4s cubic-bezier(.14,.75,.15,1)';track.style.transform=`translateX(-${Math.max(0,goal)}px)`});
- setTimeout(()=>{spinBusy=false;const current=document.getElementById('spin-zone');if(!current)return;const x=selections[target];current.innerHTML=`<div class="calc-result"><strong>Resultado da simulação</strong><div class="row"><img src="${textSafe(x.image)}" alt="${textSafe(x.name)}" style="height:105px;max-width:65%;object-fit:contain"><div style="text-align:right"><strong>${textSafe(x.name)}</strong><div class="sub">Apenas visual — não adquirido</div></div></div></div><button class="btn primary" style="width:100%;margin-top:12px" onclick="simulateCase('${textSafe(c.id)}')">Simular novamente</button><p class="muted" style="font-size:11px">Este resultado não é salvo no inventário e não possui valor financeiro.</p>`},4200)
+ setTimeout(()=>{spinBusy=false;const current=document.getElementById('spin-zone');if(!current)return;const x=selections[target];current.innerHTML=`<div class="calc-result"><strong>Resultado da simulação</strong><div class="row"><img src="${textSafe(x.image)}" alt="${textSafe(x.name)}" style="height:105px;max-width:65%;object-fit:contain"><div style="text-align:right"><strong>${textSafe(x.name)}</strong><div class="sub" style="color:${rarityColor(x)}">${rarityLabel(x)}</div><div class="sub">Apenas visual — não adquirido</div></div></div></div><button class="btn primary" style="width:100%;margin-top:12px" onclick="simulateCase('${textSafe(c.id)}')">Simular novamente</button><p class="muted" style="font-size:11px">Este resultado não é salvo no inventário e não possui valor financeiro.</p>`},4200)
 }
 document.addEventListener('DOMContentLoaded',()=>{document.getElementById('case-search')?.addEventListener('input',renderCases);document.getElementById('case-filter')?.addEventListener('change',renderCases);loadCatalog()});
 
